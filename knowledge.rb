@@ -1,24 +1,19 @@
-def attribute (arg, &block)
-
-  if arg.is_a? Hash
-    key = arg.keys[0]
-    value = arg.values[0]
+def attribute(arg, value = nil, &block)
+  if arg.is_a?(Hash)
+    attribute(arg.keys.first, arg.values.first)
   else
-    key = arg
-    value = nil
-  end
+    attr_writer arg
 
-  inst = '@' + key
+    define_method "#{arg}" do
+      if instance_variable_defined?("@#{arg}")
+        instance_variable_get("@#{arg}")
+      else
+        instance_variable_set("@#{arg}", block ? instance_eval(&block) : value)
+      end
+    end
 
-  define_method (key + '?') do
-    instance_variable_get(inst) { inst ? true : false }
-  end
-
-  define_method (key + '=') do |val|
-    instance_variable_set(inst, val)
-  end
-
-  define_method key do
-    instance_variable_defined?(inst) ? instance_variable_get(inst) : instance_variable_set(inst, (block ? instance_eval(&block) : value))
+    define_method "#{arg}?" do
+      true if instance_variable_get("@#{arg}")
+    end
   end
 end
